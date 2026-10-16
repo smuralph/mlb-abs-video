@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>ABS Pitch Video</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", sans-serif;
+      background: #101415;
+      color: #f4f5f2;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 240px;
+      overflow: hidden;
+      background: #101415;
+    }
+
+    .desktop-crop {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #050707;
+    }
+
+    .savant-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1280px;
+      height: 900px;
+      border: 0;
+      transform-origin: top left;
+    }
+
+    .notice {
+      position: absolute;
+      z-index: 2;
+      top: 10px;
+      right: 10px;
+      padding: 7px 10px;
+      border: 1px solid rgb(255 255 255 / 18%);
+      border-radius: 4px;
+      background: rgb(12 17 18 / 88%);
+      color: #f4f5f2;
+      font-size: 12px;
+      line-height: 1.2;
+      text-decoration: none;
+    }
+
+    .notice:hover, .notice:focus-visible {
+      background: #263337;
+      outline: 2px solid #d4e96b;
+      outline-offset: 2px;
+    }
+
+    .empty {
+      display: grid;
+      min-height: 100%;
+      place-items: center;
+      padding: 24px;
+      color: #d4e96b;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .savant-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: none !important;
+        border: 0;
+        background: #fff;
+      }
+
+      .notice { top: 8px; right: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <div class="empty" id="empty">Choose a pitch to view its Savant video.</div>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const playId = params.get("playId") || "";
+    const validPlayId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(playId);
+    const stage = document.getElementById("stage");
+
+    if (validPlayId) {
+      const savantUrl = `https://baseballsavant.mlb.com/sporty-videos?playId=${encodeURIComponent(playId)}`;
+      const desktop = document.createElement("div");
+      desktop.className = "desktop-crop";
+      const savantFrame = document.createElement("iframe");
+      savantFrame.className = "savant-frame";
+      savantFrame.title = "Baseball Savant pitch video";
+      savantFrame.src = savantUrl;
+      savantFrame.allow = "autoplay; fullscreen; picture-in-picture";
+      desktop.append(savantFrame);
+
+      const link = document.createElement("a");
+      link.className = "notice";
+      link.href = savantUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Open full Savant page";
+
+      stage.replaceChildren(desktop, link);
+
+      const resizeObserver = new ResizeObserver(([entry]) => {
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
+        const scale = Math.min(width / 928, height / 522);
+        savantFrame.style.transform = `scale(${scale}) translate(-14px, -299px)`;
+      });
+      resizeObserver.observe(stage);
+    } else if (playId) {
+      document.getElementById("empty").textContent = "The playId must be a valid UUID.";
+    }
+  </script>
+</body>
+</html>
